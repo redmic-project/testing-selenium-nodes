@@ -1,0 +1,98 @@
+version: '3.9'
+
+x-selenium-node-commons: &selenium-node-commons
+  networks:
+    selenium-net:
+    gitlab-net:
+  volumes:
+    - type: tmpfs
+      target: /dev/shm
+      tmpfs:
+        size: 2000000000
+  healthcheck:
+    test: curl -sSL http://localhost:5555/status
+    interval: ${HEALTHCHECK_INTERVAL:-30s}
+    timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+    retries: ${HEALTHCHECK_RETRIES:-5}
+    start_period: ${HEALTHCHECK_START_PERIOD:-1m}
+
+x-selenium-node-environment: &selenium-node-environment
+  SE_EVENT_BUS_HOST:
+  SE_EVENT_BUS_PUBLISH_PORT:
+  SE_EVENT_BUS_SUBSCRIBE_PORT:
+  SE_NODE_GRID_URL: http://${SE_EVENT_BUS_HOST}:${SE_HUB_PORT}
+  SE_NODE_SESSION_TIMEOUT:
+  SE_NODE_OVERRIDE_MAX_SESSIONS:
+  START_XVFB:
+  SCREEN_WIDTH:
+  SCREEN_HEIGHT:
+  SCREEN_DEPTH:
+  SCREEN_DPI:
+  VNC_NO_PASSWORD:
+  VNC_VIEW_ONLY:
+  JAVA_OPTS:
+
+x-selenium-node-deploy: &selenium-node-deploy
+  mode: replicated
+  restart_policy:
+    delay: ${RESTART_DELAY:-10s}
+  update_config:
+    delay: ${UPDATE_DELAY:-1m}
+
+x-selenium-chrome: &selenium-chrome
+  << : *selenium-node-commons
+  image: ${CHROME_IMAGE_NAME:-selenium/node-chrome}:${CHROME_IMAGE_TAG:-latest}
+  hostname: ${CHROME_HOSTNAME_PREFIX}-{{.Task.Slot}}
+  environment:
+    << : *selenium-node-environment
+    SE_NODE_HOST: ${CHROME_HOSTNAME_PREFIX}-{{.Task.Slot}}
+    SE_NODE_MAX_SESSIONS: ${CHROME_NODE_MAX_SESSIONS:-1}
+    SE_OPTS: ${CHROME_SE_OPTS}
+  deploy:
+    << : *selenium-node-deploy
+    replicas: ${CHROME_REPLICAS:-1}
+    resources:
+      limits:
+        cpus: '${CHROME_RESOURCES_LIMITS_CPUS:-0.5}'
+        memory: ${CHROME_RESOURCES_LIMITS_MEMORY:-1G}
+      reservations:
+        cpus: '${CHROME_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+        memory: ${CHROME_RESOURCES_RESERVATIONS_MEMORY:-512M}
+
+x-selenium-firefox: &selenium-firefox
+  << : *selenium-node-commons
+  image: ${FIREFOX_IMAGE_NAME:-selenium/node-firefox}:${FIREFOX_IMAGE_TAG:-latest}
+  hostname: ${FIREFOX_HOSTNAME_PREFIX}-{{.Task.Slot}}
+  environment:
+    << : *selenium-node-environment
+    SE_NODE_HOST: ${FIREFOX_HOSTNAME_PREFIX}-{{.Task.Slot}}
+    SE_NODE_MAX_SESSIONS: ${FIREFOX_NODE_MAX_SESSIONS:-1}
+    SE_OPTS: ${FIREFOX_SE_OPTS}
+  deploy:
+    << : *selenium-node-deploy
+    replicas: ${FIREFOX_REPLICAS:-1}
+    resources:
+      limits:
+        cpus: '${FIREFOX_RESOURCES_LIMITS_CPUS:-0.5}'
+        memory: ${FIREFOX_RESOURCES_LIMITS_MEMORY:-1G}
+      reservations:
+        cpus: '${FIREFOX_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+        memory: ${FIREFOX_RESOURCES_RESERVATIONS_MEMORY:-512M}
+
+services:
+  selenium-chrome:
+    << : *selenium-chrome
+
+  selenium-firefox:
+    << : *selenium-firefox
+
+networks:
+  selenium-net:
+    name: ${SELENIUM_NET_NAME:-selenium-net}
+    driver: ${SELENIUM_NET_DRIVER:-overlay}
+    external: true
+
+  gitlab-net:
+    name: ${GITLAB_NET_NAME:-gitlab-net}
+    driver: ${GITLAB_NET_DRIVER:-overlay}
+    external: true
