@@ -53,7 +53,7 @@ x-selenium-chrome: &selenium-chrome
     replicas: ${CHROME_REPLICAS:-1}
     resources:
       limits:
-        cpus: '${CHROME_RESOURCES_LIMITS_CPUS:-0.5}'
+        cpus: '${CHROME_RESOURCES_LIMITS_CPUS:-2}'
         memory: ${CHROME_RESOURCES_LIMITS_MEMORY:-1G}
       reservations:
         cpus: '${CHROME_RESOURCES_RESERVATIONS_CPUS:-0.001}'
@@ -73,7 +73,7 @@ x-selenium-firefox: &selenium-firefox
     replicas: ${FIREFOX_REPLICAS:-1}
     resources:
       limits:
-        cpus: '${FIREFOX_RESOURCES_LIMITS_CPUS:-0.5}'
+        cpus: '${FIREFOX_RESOURCES_LIMITS_CPUS:-2}'
         memory: ${FIREFOX_RESOURCES_LIMITS_MEMORY:-1G}
       reservations:
         cpus: '${FIREFOX_RESOURCES_RESERVATIONS_CPUS:-0.001}'
