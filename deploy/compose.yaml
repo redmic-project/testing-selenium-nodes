@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-selenium-node-commons: &selenium-node-commons
   networks:
     selenium-net:
